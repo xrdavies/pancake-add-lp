@@ -1,0 +1,15 @@
+{
+  "name": "pancake-lp-encoder",
+  "version": "1.0.0",
+  "description": "Encode parameters for PancakeSwap V3 mint function",
+  "main": "generateMintCalldata.js",
+  "scripts": {
+    "start": "node generateMintCalldata.js"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2",
+    "@pancakeswap/v3-sdk": "^3.9.3",
+    "@pancakeswap/swap-sdk-core": "^1.4.0",
+    "viem": "^2.7.1"
+  }
+}

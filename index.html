@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PancakeSwap V3 Add Liquidity</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PancakeSwap V3 - Add Liquidity</h1>
+
+        <button id="connectWalletBtn">Connect Wallet</button>
+        <p id="walletStatus">Status: Not Connected</p>
+        <p id="networkStatus"></p>
+        <button id="switchNetworkBtn" style="display:none;">Switch to BSC Mainnet</button>
+        <p id="accountStatus"></p>
+
+        <h2>Liquidity Parameters</h2>
+        <form id="liquidityForm">
+            <label for="token0">Token0 Address (e.g., USDT):</label>
+            <input type="text" id="token0" value="0x55d398326f99059fF775485246999027B3197955">
+            <label for="token0Decimals">Token0 Decimals:</label>
+            <input type="number" id="token0Decimals" value="18">
+
+            <label for="token1">Token1 Address (e.g., BR):</label>
+            <input type="text" id="token1" value="0xFf7d6A96ae471BbCD7713aF9CB1fEeB16cf56B41">
+            <label for="token1Decimals">Token1 Decimals:</label>
+            <input type="number" id="token1Decimals" value="18">
+
+            <label for="fee">Fee Tier (e.g., 100, 500, 2500, 10000):</label>
+            <input type="number" id="fee" value="100">
+
+            <label for="tickLower">Tick Lower:</label>
+            <input type="number" id="tickLower" value="30415">
+
+            <label for="tickUpper">Tick Upper:</label>
+            <input type="number" id="tickUpper" value="30417">
+
+            <label for="amount0Desired">Amount Token0 Desired (human-readable, e.g., 10.5):</label>
+            <input type="text" id="amount0Desired" value="18.060645927192643061">
+
+            <label for="amount1Desired">Amount Token1 Desired (human-readable, e.g., 200.75):</label>
+            <input type="text" id="amount1Desired" value="523.344568558532988638">
+
+            <label for="amount0Min">Amount Token0 Minimum (raw, usually 0):</label>
+            <input type="text" id="amount0Min" value="0">
+
+            <label for="amount1Min">Amount Token1 Minimum (raw, usually 0):</label>
+            <input type="text" id="amount1Min" value="0">
+
+            <label for="recipient">Recipient Address (your address):</label>
+            <input type="text" id="recipient" placeholder="Will be auto-filled after connect">
+
+            <label for="deadline">Deadline (Unix Timestamp, e.g., 10 mins from now):</label>
+            <input type="number" id="deadline" value="">
+
+            <button type="submit">Add Liquidity</button>
+        </form>
+
+        <h2>Transaction Status</h2>
+        <p id="txStatus"></p>
+        <div id="txLinkContainer" style="display:none;">
+            <a id="txLink" href="#" target="_blank">View Transaction on BSCScan</a>
+        </div>
+    </div>
+
+    <script src="frontend.js"></script>
+</body>
+</html>
