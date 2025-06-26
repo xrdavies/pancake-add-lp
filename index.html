@@ -106,6 +106,7 @@
         </div>
     </header>
 
+    <!-- Section 1: Data Input -->
     <div id="dataSection">
         <h2>1. Fetch Pool Data</h2>
         <form id="liquidityForm">
@@ -124,7 +125,7 @@
             <label for="tickUpper">Tick Upper:</label>
             <input type="number" id="tickUpper" name="tickUpper" value="25309" required>
 
-            <button type="button" id="fetchDataBtn">Fetch Pool Data & Calculate</button>
+            <button type="button" id="fetchDataBtn" disabled>Fetch Pool Data & Calculate</button>
         </form>
 
         <div id="liveData">
@@ -136,20 +137,24 @@
         </div>
     </div>
 
-    <div id="txSection">
+    <hr>
+
+    <!-- Section 2: Add Liquidity -->
+    <div id="addLiquiditySection">
         <h2>2. Add Liquidity</h2>
-        <button type="submit" form="liquidityForm" id="submitBtn">Add Liquidity</button>
-        <div id="txStatus"></div>
-        <div id="txLinkContainer" style="display: none;">
+        <button type="button" id="addLiquidityBtn" disabled>Add Liquidity</button>
+        <div id="txStatus" style="margin-top: 1rem;"></div>
+        <div id="txLinkContainer" class="hidden">
             <a id="txLink" href="#" target="_blank">View Transaction on BscScan</a>
         </div>
     </div>
 
     <hr>
 
+    <!-- Section 3: Existing Positions -->
     <div id="positionsSection">
         <h2>3. Your V3 Liquidity Positions</h2>
-        <button id="fetchPositionsBtn">Fetch My Positions</button>
+        <button id="fetchPositionsBtn" disabled>Fetch My Positions</button>
         <div id="positionsList"></div>
     </div>
 

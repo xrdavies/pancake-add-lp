@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const fetchPositionsBtn = document.getElementById('fetchPositionsBtn');
   const positionsListEl = document.getElementById('positionsList');
   const disconnectBtn = document.getElementById('disconnectBtn');
+  const addLiquidityBtn = document.getElementById('addLiquidityBtn');
+  const addLiquiditySection = document.getElementById('addLiquiditySection');
 
   // --- Constants ---
   const NONFUNGIBLE_POSITION_MANAGER_ADDRESS = '0x46A15B0b27311cedF172AB29E4f4766fbE7F4364';
@@ -84,9 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     connectWalletBtn.classList.remove('hidden');
     walletInfoEl.classList.add('hidden');
+
+    // Disable all action buttons that require a wallet
+    fetchDataBtn.disabled = true;
+    addLiquidityBtn.disabled = true;
     fetchPositionsBtn.disabled = true;
-    liquidityForm.querySelector('button').disabled = true;
-    positionsListEl.innerHTML = ''; // Clear positions if disconnected
+
+    // Clear/reset all dynamic content areas
+    positionsListEl.innerHTML = '';
+    liveDataEl.innerHTML = '<p>Calculated data will appear here...</p>';
+    document.getElementById('pool-stats-container').classList.add('hidden');
+    txStatusEl.textContent = '';
+    txLinkContainerEl.classList.add('hidden');
   }
 
   async function updateWalletStatus() {
@@ -278,17 +289,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       liveDataEl.innerHTML = `
-                <p><strong>Token 0:</strong> ${token0Symbol} (${token0Addr})</p>
-                <p><strong>Token 1:</strong> ${token1Symbol} (${token1Addr})</p>
-                <p><strong>Fee Tier:</strong> ${fee}</p>
-                <hr>
-                <p><strong>Your ${token0Symbol} Balance:</strong> ${ethers.utils.formatUnits(token0Balance, token0Decimals)}</p>
-                <p><strong>Your ${token1Symbol} Balance:</strong> ${ethers.utils.formatUnits(token1Balance, token1Decimals)}</p>
-                <hr>
-                <p><strong>Current Pool Tick:</strong> ${currentTick}</p>
-                <p><strong>Input Amount (${token0Symbol}):</strong> ${amount0DesiredStr}</p>
-                <p><strong>Calculated Amount (${token1Symbol}):</strong> ${amount1Display}</p>
-            `;
+        <h3>Calculation Results:</h3>
+        <p><strong>Token 0 (${token0Symbol}) Balance:</strong> ${ethers.utils.formatUnits(token0Balance, token0Decimals)}</p>
+        <p><strong>Token 1 (${token1Symbol}) Balance:</strong> ${ethers.utils.formatUnits(token1Balance, token1Decimals)}</p>
+        <hr>
+        <p><strong>Current Pool Tick:</strong> ${currentTick}</p>
+        <p><strong>Input Amount (${token0Symbol}):</strong> ${amount0DesiredStr}</p>
+        <p><strong>Calculated Amount (${token1Symbol}):</strong> ${amount1Display}</p>
+      `;
+
+      // Show and enable the add liquidity button
+
+      addLiquidityBtn.disabled = false;
 
       // --- 7. Fetch and display pool stats ---
       const poolStatsEl = document.getElementById('pool-stats');
@@ -649,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
   connectWalletBtn.addEventListener('click', connectWallet);
   document.getElementById('poolAddress').addEventListener('blur', fetchAndSetCurrentTick);
   fetchDataBtn.addEventListener('click', fetchAndCalculate);
-  liquidityForm.addEventListener('submit', submitTransaction);
+  addLiquidityBtn.addEventListener('click', submitTransaction);
   fetchPositionsBtn.addEventListener('click', fetchPositions);
   positionsListEl.addEventListener('click', handlePositionsClick);
   disconnectBtn.addEventListener('click', disconnectWallet);
