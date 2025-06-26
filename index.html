@@ -45,7 +45,51 @@
             background-color: #5a5a6f;
             border-color: #9a9aaf;
         }
+
+        #liquidityForm {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 0;
+            align-items: center;
+        }
+
+        #liquidityForm label {
+            justify-self: end;
+        }
+
+        #liquidityForm #fetchDataBtn {
+            grid-column: 1 / -1;
+            justify-self: start;
+        }
+
+        /* Override water.css for inputs within the grid */
+        #liquidityForm input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.3rem;
+        }
         #liveData { background-color: #333; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+
+        #pool-stats-container { margin-top: 2rem; }
+        #pool-stats {
+            display: flex;
+            justify-content: space-around;
+            background: #2c2c3d;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            color: #c0c0d0;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #a9a9ff;
+        }
         #txLinkContainer { margin-top: 1rem; }
     </style>
 </head>
@@ -64,42 +108,37 @@
 
     <div id="dataSection">
         <h2>1. Fetch Pool Data</h2>
-        <label for="poolAddress">PancakeSwap V3 Pool Address:</label>
-        <input type="text" id="poolAddress" value="0x380aaDF63D84D3A434073F1d5d95f02fB23d5228" required style="width: 420px;">
-        
-        <label for="amount0Desired">Amount of Token 0 to Add (e.g., 1.5):</label>
-        <input type="text" id="amount0Desired" value="1" required>
+        <form id="liquidityForm">
+            <label for="poolAddress">V3 Pool:</label>
+            <input type="text" id="poolAddress" name="poolAddress" value="0x380aaDF63D84D3A434073F1d5d95f02fB23d5228" required>
 
-        <label for="tickLower">Tick Lower:</label>
-        <input type="number" id="tickLower" value="25308" required>
+            <label for="amount0Desired">Token 0:</label>
+            <input type="number" id="amount0Desired" name="amount0Desired" step="any" value="1" required>
 
-        <label for="tickUpper">Tick Upper:</label>
-        <input type="number" id="tickUpper" value="25309" required>
+            <label for="tickLower">Tick Lower:</label>
+            <input type="number" id="tickLower" name="tickLower" value="25308" required>
 
-        <button id="fetchDataBtn">Fetch Pool Data & Calculate</button>
-        
+            <label for="tickUpper">Tick Upper:</label>
+            <input type="number" id="tickUpper" name="tickUpper" value="25309" required>
+
+            <button type="button" id="fetchDataBtn">Fetch Pool Data & Calculate</button>
+        </form>
+
         <div id="liveData">
             <p>Calculated data will appear here...</p>
         </div>
+        <div id="pool-stats-container" class="hidden">
+            <h3>Pool Statistics</h3>
+            <div id="pool-stats"></div>
+        </div>
     </div>
 
-    <div id="pool-stats-container" class="hidden" style="margin-top: 2rem;">
-        <h2>Pool Statistics</h2>
-        <div id="pool-stats" style="display: flex; justify-content: space-around; background: #2c2c3d; padding: 1rem; border-radius: 8px;"></div>
-    </div>
-
-    <hr>
-
-    <form id="liquidityForm">
-        <h2>2. Add Liquidity to PancakeSwap</h2>
-        <button type="submit">Add Liquidity via MetaMask</button>
-    </form>
-
-    <div id="transactionStatus">
-        <h3>Transaction Status</h3>
-        <p id="txStatus">Awaiting submission...</p>
-        <div id="txLinkContainer" style="display:none;">
-            <a id="txLink" href="#" target="_blank">View on BscScan</a>
+    <div id="txSection">
+        <h2>2. Add Liquidity</h2>
+        <button type="submit" form="liquidityForm" id="submitBtn">Add Liquidity</button>
+        <div id="txStatus"></div>
+        <div id="txLinkContainer" style="display: none;">
+            <a id="txLink" href="#" target="_blank">View Transaction on BscScan</a>
         </div>
     </div>
 

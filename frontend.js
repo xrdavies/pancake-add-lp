@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (currentTick !== undefined) {
         document.getElementById('tickLower').value = currentTick;
-        document.getElementById('tickUpper').value = currentTick;
+        document.getElementById('tickUpper').value = currentTick + 1;
       }
     } catch (error) {
       console.error('Could not fetch current tick:', error);
@@ -274,40 +274,38 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
       // --- 7. Fetch and display pool stats ---
-      const statsContainer = document.getElementById('pool-stats-container');
-      const statsDiv = document.getElementById('pool-stats');
+      const poolStatsEl = document.getElementById('pool-stats');
+      const poolStatsContainer = document.getElementById('pool-stats-container');
       try {
         const response = await fetch(
           `https://explorer.pancakeswap.com/api/cached/pools/v3/bsc/${poolAddress.toLowerCase()}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          const tvl = parseFloat(data.tvlUSD);
-          const volume24h = parseFloat(data.volumeUSD24h);
-          const fees24h = parseFloat(data.feeUSD24h);
+        const data = await response.json();
+        if (data && data.tvlUSD) {
+          const formatCurrency = (value) =>
+            `$${parseFloat(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-          statsDiv.innerHTML = `
-                        <div>
-                            <h3>Total Value Locked (TVL)</h3>
-                            <p style="font-size: 1.2em; color: #a9a9ff;">$${tvl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
-                        <div>
-                            <h3>Volume (24h)</h3>
-                            <p style="font-size: 1.2em; color: #a9a9ff;">$${volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
-                        <div>
-                            <h3>Fees (24h)</h3>
-                            <p style="font-size: 1.2em; color: #a9a9ff;">$${fees24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
-                    `;
-          statsContainer.classList.remove('hidden');
+          poolStatsEl.innerHTML = `
+            <div>
+                <div class="stat-label">Total Value Locked (TVL)</div>
+                <div class="stat-value">${formatCurrency(data.tvlUSD)}</div>
+            </div>
+            <div>
+                <div class="stat-label">Volume (24h)</div>
+                <div class="stat-value">${formatCurrency(data.volumeUSD24h)}</div>
+            </div>
+            <div>
+                <div class="stat-label">Fees (24h)</div>
+                <div class="stat-value">${formatCurrency(data.feeUSD24h)}</div>
+            </div>
+          `;
+          poolStatsContainer.classList.remove('hidden');
         } else {
-          console.error('Failed to fetch pool stats from explorer.');
-          statsContainer.classList.add('hidden');
+          poolStatsContainer.classList.add('hidden');
         }
-      } catch (statsError) {
-        console.error('Error fetching pool stats:', statsError);
-        statsContainer.classList.add('hidden');
+      } catch (e) {
+        console.error('Could not fetch pool stats:', e);
+        poolStatsContainer.classList.add('hidden');
       }
     } catch (error) {
       console.error('Calculation failed:', error);
