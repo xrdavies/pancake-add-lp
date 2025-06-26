@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Constants ---
   const NONFUNGIBLE_POSITION_MANAGER_ADDRESS = '0x46A15B0b27311cedF172AB29E4f4766fbE7F4364';
   const BSC_CHAIN_ID = 56;
-  const PANCAKE_V3_FACTORY_ADDRESS = '0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865';
+  const PANCAKE_V3_FACTORY_ADDRESS = '0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865'; // BSC Mainnet
+  const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'; // BSC Mainnet USDT
 
   // --- ABIs ---
   const ERC20_ABI = [
@@ -454,6 +455,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const amount0 = ethers.utils.formatUnits(position.amount0.quotient.toString(), token0.decimals);
         const amount1 = ethers.utils.formatUnits(position.amount1.quotient.toString(), token1.decimals);
 
+        // --- Calculate USD value of fees ---
+        let price0Usd = null;
+        let price1Usd = null;
+
+        if (token0.address.toLowerCase() === USDT_ADDRESS.toLowerCase()) {
+          price0Usd = 1;
+          price1Usd = parseFloat(pool.token1Price.toSignificant(18));
+        } else if (token1.address.toLowerCase() === USDT_ADDRESS.toLowerCase()) {
+          price1Usd = 1;
+          price0Usd = parseFloat(pool.token0Price.toSignificant(18));
+        }
+
+        let estimatedFeeValue = null;
+        if (price0Usd !== null && price1Usd !== null) {
+          const feeValue0 = parseFloat(feeAmount0) * price0Usd;
+          const feeValue1 = parseFloat(feeAmount1) * price1Usd;
+          estimatedFeeValue = feeValue0 + feeValue1;
+        }
+        // --- End of calculation ---
+
         const positionHTML = `
                     <div class="position-item" style="border: 1px solid #444; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;" id="position-${tokenId.toString()}">
                         <h4>Position - Token ID: ${tokenId.toString()}</h4>
@@ -464,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="color: #28a745;"><strong>Underlying ${token0Symbol}:</strong> ${parseFloat(amount0).toPrecision(6)}</p>
                         <p style="color: #28a745;"><strong>Underlying ${token1Symbol}:</strong> ${parseFloat(amount1).toPrecision(6)}</p>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                            <p style="color: #ffc107; margin: 0;"><strong>Unclaimed Fees:</strong> ${parseFloat(feeAmount0).toPrecision(4)} ${token0Symbol} & ${parseFloat(feeAmount1).toPrecision(4)} ${token1Symbol}</p>
+                            <p style="color: #ffc107; margin: 0;"><strong>Unclaimed Fees:</strong> ${parseFloat(feeAmount0).toPrecision(4)} ${token0Symbol} & ${parseFloat(feeAmount1).toPrecision(4)} ${token1Symbol} ${estimatedFeeValue !== null ? `(~$${estimatedFeeValue.toFixed(2)})` : ''}</p>
                             <button class="claim-btn" data-tokenid="${tokenId.toString()}">Claim Fees</button>
                         </div>
                         <p class="claim-status" style="margin-top: 0.25rem; font-size: 0.9em;"></p>
