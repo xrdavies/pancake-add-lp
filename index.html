@@ -110,7 +110,10 @@
         <h2>1. Fetch Pool Data</h2>
         <form id="liquidityForm">
             <label for="poolAddress">V3 Pool:</label>
-            <input type="text" id="poolAddress" name="poolAddress" value="0x380aaDF63D84D3A434073F1d5d95f02fB23d5228" required>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="text" id="poolAddress" name="poolAddress" placeholder="Enter PancakeSwap V3 Pool Address" value="0x380aaDF63D84D3A434073F1d5d95f02fB23d5228" required style="flex-grow: 1;">
+                <span id="poolName" style="font-weight: bold; color: #c0c0d0;"></span>
+            </div>
 
             <label for="amount0Desired">Token 0:</label>
             <input type="number" id="amount0Desired" name="amount0Desired" step="any" value="1" required>

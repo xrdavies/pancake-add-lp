@@ -128,22 +128,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAndSetCurrentTick() {
     const poolAddress = document.getElementById('poolAddress').value;
+    const poolNameEl = document.getElementById('poolName');
+    poolNameEl.textContent = '...'; // Show loading indicator
+
     if (!provider || !ethers.utils.isAddress(poolAddress)) {
+      poolNameEl.textContent = '';
       return;
     }
 
     try {
       const poolContract = new ethers.Contract(poolAddress, POOL_ABI, provider);
-      const slot0 = await poolContract.slot0();
-      const currentTick = slot0[1]; // tick is at index 1
 
+      // Fetch tick and token addresses in parallel
+      const [slot0, token0Address, token1Address] = await Promise.all([
+        poolContract.slot0(),
+        poolContract.token0(),
+        poolContract.token1(),
+      ]);
+
+      const currentTick = slot0[1]; // tick is at index 1
       if (currentTick !== undefined) {
         document.getElementById('tickLower').value = currentTick;
         document.getElementById('tickUpper').value = currentTick + 1;
       }
+
+      // Fetch token symbols
+      const token0Contract = new ethers.Contract(token0Address, ERC20_ABI, provider);
+      const token1Contract = new ethers.Contract(token1Address, ERC20_ABI, provider);
+      const [token0Symbol, token1Symbol] = await Promise.all([token0Contract.symbol(), token1Contract.symbol()]);
+
+      poolNameEl.textContent = `${token0Symbol}/${token1Symbol}`;
     } catch (error) {
-      console.error('Could not fetch current tick:', error);
-      // Fail silently for better UX
+      console.error('Could not fetch pool data:', error);
+      poolNameEl.textContent = 'Invalid Pool';
     }
   }
 
