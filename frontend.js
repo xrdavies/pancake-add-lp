@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       statusEl.textContent = 'Please confirm the transaction in your wallet...';
       const tx = await nfpmContract.collect(collectParams);
-      statusEl.textContent = `Transaction sent! Hash: ${tx.hash}. Waiting for confirmation...`;
+      statusEl.innerHTML = `Claim Tx: <a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color: #a9a9ff;">${tx.hash.substring(0, 10)}...${tx.hash.substring(tx.hash.length - 10)}</a><br>Waiting for confirmation...`;
 
       const receipt = await tx.wait();
       statusEl.textContent = `Fees claimed successfully! Transaction confirmed in block ${receipt.blockNumber}.`;
@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       statusEl.textContent = 'Decreasing liquidity... Please confirm in wallet.';
       const decreaseTx = await nfpmContract.decreaseLiquidity(decreaseParams);
-      statusEl.textContent = `Tx sent: ${decreaseTx.hash}. Waiting for confirmation...`;
+      statusEl.innerHTML = `Decrease Tx: <a href="https://bscscan.com/tx/${decreaseTx.hash}" target="_blank" style="color: #a9a9ff;">${decreaseTx.hash.substring(0, 10)}...${decreaseTx.hash.substring(decreaseTx.hash.length - 10)}</a><br>Waiting for confirmation...`;
       await decreaseTx.wait();
       statusEl.textContent = 'Liquidity decreased. Now collecting tokens...';
 
@@ -620,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       statusEl.textContent = 'Collecting tokens... Please confirm in wallet.';
       const collectTx = await nfpmContract.collect(collectParams);
-      statusEl.textContent = `Collect Tx sent: ${collectTx.hash}. Waiting for confirmation...`;
+      statusEl.innerHTML = `Collect Tx: <a href="https://bscscan.com/tx/${collectTx.hash}" target="_blank" style="color: #a9a9ff;">${collectTx.hash.substring(0, 10)}...${collectTx.hash.substring(collectTx.hash.length - 10)}</a><br>Waiting for confirmation...`;
       await collectTx.wait();
 
       statusEl.textContent = 'Liquidity successfully removed and tokens collected!';
