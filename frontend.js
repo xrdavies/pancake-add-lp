@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)',
     'function positions(uint256 tokenId) view returns (uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint256 tokensOwed0, uint256 tokensOwed1)',
     'function collect(tuple(uint256 tokenId, address recipient, uint128 amount0Max, uint128 amount1Max)) payable returns (uint256 amount0, uint256 amount1)',
+    'function decreaseLiquidity(tuple(uint256 tokenId, uint128 liquidity, uint256 amount0Min, uint256 amount1Min, uint256 deadline)) payable returns (uint256 amount0, uint256 amount1)',
   ];
 
   const POOL_ABI = [
@@ -486,7 +487,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="color: #28a745;"><strong>Underlying ${token1Symbol}:</strong> ${parseFloat(amount1).toPrecision(6)}</p>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                             <p style="color: #ffc107; margin: 0;"><strong>Unclaimed Fees:</strong> ${parseFloat(feeAmount0).toPrecision(4)} ${token0Symbol} & ${parseFloat(feeAmount1).toPrecision(4)} ${token1Symbol} ${estimatedFeeValue !== null ? `(~$${estimatedFeeValue.toFixed(2)})` : ''}</p>
-                            <button class="claim-btn" data-tokenid="${tokenId.toString()}">Claim Fees</button>
+                            <div>
+                                <button class="remove-liquidity-btn" data-tokenid="${tokenId.toString()}">Remove</button>
+                                <button class="claim-btn" data-tokenid="${tokenId.toString()}">Claim Fees</button>
+                            </div>
+                        </div>
+                        <div class="remove-liquidity-section" id="remove-section-${tokenId.toString()}" style="display:none; margin-top: 1rem; background: #3a3a4f; padding: 1rem; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center;">
+                                    <label for="remove-percentage-${tokenId.toString()}" style="margin-right: 10px; white-space: nowrap;">Percentage to remove:</label>
+                                    <input type="number" id="remove-percentage-${tokenId.toString()}" min="1" max="100" value="100" style="width: 70px; margin-right: 5px;">
+                                    <span style="margin-right: 15px;">%</span>
+                                </div>
+                                <button class="confirm-remove-btn" data-tokenid="${tokenId.toString()}" data-liquidity="${position.liquidity.toString()}">Confirm</button>
+                            </div>
+                            <p class="remove-status" style="margin-top: 1rem; font-size: 0.9em; text-align: center;"></p>
                         </div>
                         <p class="claim-status" style="margin-top: 0.25rem; font-size: 0.9em;"></p>
                     </div>
@@ -545,7 +560,79 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchDataBtn.addEventListener('click', fetchAndCalculate);
   liquidityForm.addEventListener('submit', submitTransaction);
   fetchPositionsBtn.addEventListener('click', fetchPositions);
-  positionsListEl.addEventListener('click', claimFees);
+  positionsListEl.addEventListener('click', handlePositionsClick);
+
+  async function handlePositionsClick(event) {
+    if (event.target.classList.contains('claim-btn')) {
+      claimFees(event);
+    }
+    if (event.target.classList.contains('remove-liquidity-btn')) {
+      const tokenId = event.target.dataset.tokenid;
+      const removeSection = document.getElementById(`remove-section-${tokenId}`);
+      removeSection.style.display = removeSection.style.display === 'none' ? 'block' : 'none';
+    }
+    if (event.target.classList.contains('confirm-remove-btn')) {
+      removeLiquidity(event);
+    }
+  }
+
+  async function removeLiquidity(event) {
+    const tokenId = event.target.dataset.tokenid;
+    const totalLiquidity = ethers.BigNumber.from(event.target.dataset.liquidity);
+    const percentage = document.getElementById(`remove-percentage-${tokenId}`).value;
+    const statusEl = document.querySelector(`#remove-section-${tokenId} .remove-status`);
+
+    if (!percentage || percentage <= 0 || percentage > 100) {
+      return (statusEl.textContent = 'Please enter a valid percentage (1-100).');
+    }
+
+    statusEl.textContent = 'Preparing to remove liquidity...';
+    event.target.disabled = true;
+
+    try {
+      const liquidityToRemove = totalLiquidity.mul(percentage).div(100);
+
+      const nfpmContract = new ethers.Contract(NONFUNGIBLE_POSITION_MANAGER_ADDRESS, NFPM_ABI, signer);
+
+      // 1. Decrease Liquidity
+      const decreaseParams = {
+        tokenId: tokenId,
+        liquidity: liquidityToRemove,
+        amount0Min: 0, // For simplicity, we don't set a slippage protection
+        amount1Min: 0,
+        deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+      };
+
+      statusEl.textContent = 'Decreasing liquidity... Please confirm in wallet.';
+      const decreaseTx = await nfpmContract.decreaseLiquidity(decreaseParams);
+      statusEl.textContent = `Tx sent: ${decreaseTx.hash}. Waiting for confirmation...`;
+      await decreaseTx.wait();
+      statusEl.textContent = 'Liquidity decreased. Now collecting tokens...';
+
+      // 2. Collect the tokens
+      const MAX_UINT128 = ethers.BigNumber.from(2).pow(128).sub(1);
+      const collectParams = {
+        tokenId: tokenId,
+        recipient: currentAccount,
+        amount0Max: MAX_UINT128,
+        amount1Max: MAX_UINT128,
+      };
+
+      statusEl.textContent = 'Collecting tokens... Please confirm in wallet.';
+      const collectTx = await nfpmContract.collect(collectParams);
+      statusEl.textContent = `Collect Tx sent: ${collectTx.hash}. Waiting for confirmation...`;
+      await collectTx.wait();
+
+      statusEl.textContent = 'Liquidity successfully removed and tokens collected!';
+
+      // Refresh positions to show updated state
+      setTimeout(fetchPositions, 2000);
+    } catch (error) {
+      console.error('Failed to remove liquidity:', error);
+      statusEl.textContent = `Error: ${error.message}`;
+      event.target.disabled = false;
+    }
+  }
 
   // --- Initial Load ---
   connectWallet();
