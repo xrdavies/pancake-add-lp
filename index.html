@@ -6,27 +6,64 @@
     <title>PancakeSwap V3 Add Liquidity - Live Data</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
     <style>
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         body { font-family: Arial, sans-serif; background-color: #1e1e2f; color: #e0e0e0; max-width: 800px; margin: 0 auto; padding: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        header h1 { margin: 0; font-size: 1.5em; }
+        #wallet-container { position: static; }
+        #wallet-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid #4a4a61;
+            padding: 0.5rem 1rem;
+            border-radius: 16px;
+            background-color: #27262c;
+        }
+        #networkStatus, #accountStatus {
+            font-weight: 600;
+        }
+        #disconnectBtn {
+            background: transparent;
+            border: 1px solid #7a7a8f;
+            color: #f0f0f0;
+            font-size: 20px;
+            font-weight: bold;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        #disconnectBtn:hover {
+            background-color: #5a5a6f;
+            border-color: #9a9aaf;
+        }
         #liveData { background-color: #333; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
         #txLinkContainer { margin-top: 1rem; }
     </style>
 </head>
 <body>
-    <h1>PancakeSwap V3 Add Liquidity - Live Data</h1>
-
-    <div id="walletSection">
-        <h2>1. Connect Wallet</h2>
-        <button id="connectWalletBtn">Connect Wallet</button>
-        <p id="walletStatus">Status: Not Connected</p>
-        <p id="networkStatus"></p>
-        <p id="accountStatus"></p>
-    </div>
-
-    <hr>
+    <header>
+        <h1>PancakeSwap V3 Add LP</h1>
+        <div id="wallet-container">
+            <button id="connectWalletBtn">Connect Wallet</button>
+            <div id="wallet-info" class="hidden">
+                <div id="networkStatus"></div>
+                <div id="accountStatus"></div>
+                <button id="disconnectBtn">&times;</button>
+            </div>
+        </div>
+    </header>
 
     <div id="dataSection">
-        <h2>2. Fetch Pool Data</h2>
+        <h2>1. Fetch Pool Data</h2>
         <label for="poolAddress">PancakeSwap V3 Pool Address:</label>
         <input type="text" id="poolAddress" value="0x380aaDF63D84D3A434073F1d5d95f02fB23d5228" required style="width: 420px;">
         
@@ -54,7 +91,7 @@
     <hr>
 
     <form id="liquidityForm">
-        <h2>3. Add Liquidity</h2>
+        <h2>2. Add Liquidity to PancakeSwap</h2>
         <button type="submit">Add Liquidity via MetaMask</button>
     </form>
 
@@ -69,7 +106,7 @@
     <hr>
 
     <div id="positionsSection">
-        <h2>4. My Positions</h2>
+        <h2>3. Your V3 Liquidity Positions</h2>
         <button id="fetchPositionsBtn">Fetch My Positions</button>
         <div id="positionsList"></div>
     </div>

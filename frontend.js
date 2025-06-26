@@ -5,7 +5,7 @@ import { Pool, Position } from '@pancakeswap/v3-sdk';
 document.addEventListener('DOMContentLoaded', () => {
   // --- DOM Elements ---
   const connectWalletBtn = document.getElementById('connectWalletBtn');
-  const walletStatusEl = document.getElementById('walletStatus');
+  const walletInfoEl = document.getElementById('wallet-info');
   const networkStatusEl = document.getElementById('networkStatus');
   const accountStatusEl = document.getElementById('accountStatus');
   const fetchDataBtn = document.getElementById('fetchDataBtn');
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const liveDataEl = document.getElementById('liveData');
   const fetchPositionsBtn = document.getElementById('fetchPositionsBtn');
   const positionsListEl = document.getElementById('positionsList');
+  const disconnectBtn = document.getElementById('disconnectBtn');
 
   // --- Constants ---
   const NONFUNGIBLE_POSITION_MANAGER_ADDRESS = '0x46A15B0b27311cedF172AB29E4f4766fbE7F4364';
@@ -48,45 +49,80 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   // --- State ---
-  let provider, signer, currentAccount;
+  let provider, signer;
   let calculatedData = {}; // To store fetched & calculated data for the transaction
+
+  // --- Helpers ---
+  function truncateAddress(address) {
+    if (!address) return '';
+    return `${address.substring(0, 4)}...${address.substring(address.length - 4)}`;
+  }
 
   // --- Wallet & UI Functions ---
   async function connectWallet() {
-    if (typeof window.ethereum === 'undefined') {
-      return alert('MetaMask is not installed!');
-    }
-    try {
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      const accounts = await provider.send('eth_requestAccounts', []);
-      signer = provider.getSigner();
-      currentAccount = accounts[0];
-      updateWalletUI();
-      window.ethereum.on('accountsChanged', (accounts) => {
-        currentAccount = accounts[0];
-        updateWalletUI();
-      });
-      window.ethereum.on('chainChanged', () => window.location.reload());
-    } catch (err) {
-      console.error('Failed to connect wallet', err);
-      alert('Failed to connect wallet.');
+    if (window.ethereum) {
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        signer = provider.getSigner();
+        await updateWalletStatus();
+      } catch (err) {
+        console.error('User rejected connection:', err);
+        alert('Could not connect to wallet. Please approve the connection in MetaMask.');
+      }
+    } else {
+      alert('MetaMask is not installed. Please install it to use this app.');
     }
   }
 
-  async function updateWalletUI() {
+  function disconnectWallet() {
+    setDisconnectedState();
+  }
+
+  function setDisconnectedState() {
+    signer = null;
+
+    connectWalletBtn.classList.remove('hidden');
+    walletInfoEl.classList.add('hidden');
+    fetchPositionsBtn.disabled = true;
+    liquidityForm.querySelector('button').disabled = true;
+    positionsListEl.innerHTML = ''; // Clear positions if disconnected
+  }
+
+  async function updateWalletStatus() {
     if (!signer) {
-      walletStatusEl.textContent = 'Status: Not Connected';
+      setDisconnectedState();
       return;
     }
-    const network = await provider.getNetwork();
-    walletStatusEl.textContent = 'Status: Connected';
-    accountStatusEl.textContent = `Account: ${currentAccount}`;
-    if (network.chainId !== BSC_CHAIN_ID) {
-      networkStatusEl.textContent = `Wrong Network! Please switch to BSC Mainnet.`;
-      networkStatusEl.style.color = 'red';
-    } else {
-      networkStatusEl.textContent = `Network: ${network.name}`;
-      networkStatusEl.style.color = 'green';
+
+    try {
+      const account = await signer.getAddress();
+      const network = await provider.getNetwork();
+
+      if (!account) {
+        // Explicitly check for a valid account
+        throw new Error('Account not found or wallet is locked.');
+      }
+
+      connectWalletBtn.classList.add('hidden');
+      walletInfoEl.classList.remove('hidden');
+
+      if (network.chainId !== BSC_CHAIN_ID) {
+        networkStatusEl.textContent = 'Wrong Network!';
+        networkStatusEl.style.color = '#ff6b6b';
+        accountStatusEl.textContent = 'Please switch to BNB Chain';
+        fetchPositionsBtn.disabled = true;
+        liquidityForm.querySelector('button').disabled = true;
+      } else {
+        networkStatusEl.textContent = 'BNB Chain';
+        networkStatusEl.style.color = 'inherit';
+        accountStatusEl.textContent = truncateAddress(account);
+        fetchPositionsBtn.disabled = false;
+        liquidityForm.querySelector('button').disabled = false;
+      }
+    } catch (error) {
+      console.error('Failed to update wallet status, resetting UI.', error);
+      setDisconnectedState();
     }
   }
 
@@ -155,14 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const token0Contract = new ethers.Contract(token0Addr, ERC20_ABI, provider);
       const token1Contract = new ethers.Contract(token1Addr, ERC20_ABI, provider);
 
+      const account = await signer.getAddress();
+
       const [token0Decimals, token1Decimals, token0Symbol, token1Symbol, token0Balance, token1Balance] =
         await Promise.all([
           token0Contract.decimals(),
           token1Contract.decimals(),
           token0Contract.symbol(),
           token1Contract.symbol(),
-          token0Contract.balanceOf(currentAccount),
-          token1Contract.balanceOf(currentAccount),
+          token0Contract.balanceOf(account),
+          token1Contract.balanceOf(account),
         ]);
 
       // --- 4. Use PancakeSwap SDK to calculate missing amount ---
@@ -199,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tickUpper: tickUpper,
         amount0Desired: amount0InWei,
         amount1Desired: ethers.BigNumber.from(amount1DesiredBI.toString()),
-        recipient: currentAccount,
+        recipient: account,
         deadline: Math.floor(Date.now() / 1000) + 60 * 20,
         token0Symbol,
         token1Symbol,
@@ -284,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
-    const allowance = await tokenContract.allowance(currentAccount, NONFUNGIBLE_POSITION_MANAGER_ADDRESS);
+    const allowance = await tokenContract.allowance(await signer.getAddress(), NONFUNGIBLE_POSITION_MANAGER_ADDRESS);
     const tokenSymbol = await tokenContract.symbol();
 
     // Use .lt() for ethers' BigNumber
@@ -378,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const tx = {
         to: NONFUNGIBLE_POSITION_MANAGER_ADDRESS,
-        from: currentAccount,
+        from: await signer.getAddress(),
         data: '0x88316456' + calldata.slice(2),
       };
 
@@ -398,15 +436,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchPositions() {
-    if (!signer || !currentAccount) {
-      return alert('Please connect your wallet first.');
-    }
+    if (!signer) return alert('Please connect your wallet first.');
 
     positionsListEl.innerHTML = 'Fetching positions...';
 
     try {
+      const account = await signer.getAddress();
       const nfpmContract = new ethers.Contract(NONFUNGIBLE_POSITION_MANAGER_ADDRESS, NFPM_ABI, provider);
-      const balance = await nfpmContract.balanceOf(currentAccount);
+      const balance = await nfpmContract.balanceOf(account);
 
       if (balance.isZero()) {
         positionsListEl.innerHTML = '<p>No liquidity positions found.</p>';
@@ -417,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const positionPromises = [];
       for (let i = 0; i < balance.toNumber(); i++) {
-        positionPromises.push(nfpmContract.tokenOfOwnerByIndex(currentAccount, i));
+        positionPromises.push(nfpmContract.tokenOfOwnerByIndex(account, i));
       }
 
       const tokenIds = await Promise.all(positionPromises);
@@ -447,12 +484,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Calculate unclaimed fees ---
         const collectParams = {
           tokenId: tokenId,
-          recipient: currentAccount, // Fees will be sent to the user's address
+          recipient: account, // Fees will be sent to the user's address
           amount0Max: MAX_UINT128,
           amount1Max: MAX_UINT128,
         };
 
-        const fees = await nfpmContract.callStatic.collect(collectParams, { from: currentAccount });
+        const fees = await nfpmContract.callStatic.collect(collectParams, { from: account });
         const feeAmount0 = ethers.utils.formatUnits(fees.amount0, token0.decimals);
         const feeAmount1 = ethers.utils.formatUnits(fees.amount1, token1.decimals);
 
@@ -558,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tokenId = event.target.dataset.tokenid;
     const statusEl = document.querySelector(`#position-${tokenId} .claim-status`);
 
-    if (!signer || !currentAccount) {
+    if (!signer) {
       return alert('Please connect your wallet first.');
     }
 
@@ -566,12 +603,13 @@ document.addEventListener('DOMContentLoaded', () => {
     event.target.disabled = true;
 
     try {
+      const account = await signer.getAddress();
       const nfpmContract = new ethers.Contract(NONFUNGIBLE_POSITION_MANAGER_ADDRESS, NFPM_ABI, signer);
       const MAX_UINT128 = ethers.BigNumber.from(2).pow(128).sub(1);
 
       const collectParams = {
         tokenId: tokenId,
-        recipient: currentAccount,
+        recipient: account,
         amount0Max: MAX_UINT128,
         amount1Max: MAX_UINT128,
       };
@@ -599,6 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
   liquidityForm.addEventListener('submit', submitTransaction);
   fetchPositionsBtn.addEventListener('click', fetchPositions);
   positionsListEl.addEventListener('click', handlePositionsClick);
+  disconnectBtn.addEventListener('click', disconnectWallet);
 
   async function handlePositionsClick(event) {
     if (event.target.classList.contains('claim-btn')) {
@@ -649,9 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 2. Collect the tokens
       const MAX_UINT128 = ethers.BigNumber.from(2).pow(128).sub(1);
+      const account = await signer.getAddress();
       const collectParams = {
         tokenId: tokenId,
-        recipient: currentAccount,
+        recipient: account,
         amount0Max: MAX_UINT128,
         amount1Max: MAX_UINT128,
       };
@@ -673,5 +713,46 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Initial Load ---
-  connectWallet();
+  async function initialize() {
+    if (!window.ethereum) {
+      setDisconnectedState();
+      return;
+    }
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+
+    // Set up listeners for real-time events
+    window.ethereum.on('accountsChanged', async (accounts) => {
+      if (accounts.length > 0) {
+        signer = provider.getSigner();
+      } else {
+        signer = null;
+      }
+      await updateWalletStatus();
+    });
+    window.ethereum.on('chainChanged', () => window.location.reload());
+
+    // Perform a robust initial connection check
+    try {
+      const accounts = await provider.listAccounts();
+      if (accounts.length === 0) {
+        // No accounts are connected to the site
+        setDisconnectedState();
+        return;
+      }
+
+      signer = provider.getSigner();
+      // This is the crucial test: it will fail if the wallet is locked.
+      await signer.getAddress();
+
+      // If we successfully get an address, we are connected and unlocked.
+      await updateWalletStatus();
+    } catch (error) {
+      // This catches any error during the initial check (e.g., locked wallet)
+      console.log('Initial connection check failed, setting UI to disconnected.', error.message);
+      setDisconnectedState();
+    }
+  }
+
+  initialize();
 });
