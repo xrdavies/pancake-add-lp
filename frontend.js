@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     liveDataEl.innerHTML = 'Fetching data...';
+    document.getElementById('pool-stats-container').classList.add('hidden'); // Hide stats initially
 
     try {
       // --- 3. Fetch pool data from blockchain ---
@@ -233,6 +234,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Input Amount (${token0Symbol}):</strong> ${amount0DesiredStr}</p>
                 <p><strong>Calculated Amount (${token1Symbol}):</strong> ${amount1Display}</p>
             `;
+
+      // --- 7. Fetch and display pool stats ---
+      const statsContainer = document.getElementById('pool-stats-container');
+      const statsDiv = document.getElementById('pool-stats');
+      try {
+        const response = await fetch(
+          `https://explorer.pancakeswap.com/api/cached/pools/v3/bsc/${poolAddress.toLowerCase()}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const tvl = parseFloat(data.tvlUSD);
+          const volume24h = parseFloat(data.volumeUSD24h);
+          const fees24h = parseFloat(data.feeUSD24h);
+
+          statsDiv.innerHTML = `
+                        <div>
+                            <h3>Total Value Locked (TVL)</h3>
+                            <p style="font-size: 1.2em; color: #a9a9ff;">$${tvl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div>
+                            <h3>Volume (24h)</h3>
+                            <p style="font-size: 1.2em; color: #a9a9ff;">$${volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div>
+                            <h3>Fees (24h)</h3>
+                            <p style="font-size: 1.2em; color: #a9a9ff;">$${fees24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                    `;
+          statsContainer.classList.remove('hidden');
+        } else {
+          console.error('Failed to fetch pool stats from explorer.');
+          statsContainer.classList.add('hidden');
+        }
+      } catch (statsError) {
+        console.error('Error fetching pool stats:', statsError);
+        statsContainer.classList.add('hidden');
+      }
     } catch (error) {
       console.error('Calculation failed:', error);
       liveDataEl.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;

@@ -6,7 +6,8 @@
     <title>PancakeSwap V3 Add Liquidity - Live Data</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
     <style>
-        body { max-width: 800px; margin: auto; padding: 1rem; }
+        .hidden { display: none; }
+        body { font-family: Arial, sans-serif; background-color: #1e1e2f; color: #e0e0e0; max-width: 800px; margin: 0 auto; padding: 2rem; }
         #liveData { background-color: #333; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
         #txLinkContainer { margin-top: 1rem; }
     </style>
@@ -43,6 +44,11 @@
         <div id="liveData">
             <p>Calculated data will appear here...</p>
         </div>
+    </div>
+
+    <div id="pool-stats-container" class="hidden" style="margin-top: 2rem;">
+        <h2>Pool Statistics</h2>
+        <div id="pool-stats" style="display: flex; justify-content: space-around; background: #2c2c3d; padding: 1rem; border-radius: 8px;"></div>
     </div>
 
     <hr>
