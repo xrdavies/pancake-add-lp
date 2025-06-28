@@ -329,11 +329,21 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `;
           poolStatsContainer.classList.remove('hidden');
+
+          // Calculate and display APR from explorer data
+          const fees24h = parseFloat(data.feeUSD24h);
+          const tvl = parseFloat(data.tvlUSD);
+          if (tvl > 0 && fees24h > 0) {
+            const apr = (fees24h / tvl) * 365 * 100;
+            const aprEl = document.createElement('div');
+            aprEl.innerHTML = `<div class="stat-label">APR (24h)</div><div class="stat-value">${apr.toFixed(2)}%</div>`;
+            poolStatsEl.appendChild(aprEl);
+          }
         } else {
           poolStatsContainer.classList.add('hidden');
         }
-      } catch (e) {
-        console.error('Could not fetch pool stats:', e);
+      } catch (error) {
+        console.error('Error fetching pool stats:', error);
         poolStatsContainer.classList.add('hidden');
       }
     } catch (error) {
