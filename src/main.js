@@ -1,10 +1,11 @@
-import { initializeWallet } from './wallet.js';
+import { initializeWallet, disconnectWallet } from './wallet.js';
 import * as ui from './ui.js';
 import * as pancakeswap from './pancakeswap.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- DOM Elements ---
   const connectWalletBtn = document.getElementById('connectWalletBtn');
+  const disconnectBtn = document.getElementById('disconnectBtn');
   const walletInfoEl = document.getElementById('wallet-info');
   const networkStatusEl = document.getElementById('networkStatus');
   const accountStatusEl = document.getElementById('accountStatus');
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Initialize UI Module ---
   ui.setDOMElements({
     connectWalletBtn,
+    disconnectBtn,
     walletInfoEl,
     networkStatusEl,
     accountStatusEl,
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Event Listeners ---
   connectWalletBtn.addEventListener('click', initializeWallet);
+  disconnectBtn.addEventListener('click', disconnectWallet);
   poolAddressInput.addEventListener('blur', pancakeswap.fetchAndSetCurrentTick);
   fetchDataBtn.addEventListener('click', pancakeswap.fetchAndCalculate);
   addLiquidityBtn.addEventListener('click', pancakeswap.submitTransaction);

@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
-import { showConnectedState, showDisconnectedState } from './ui.js';
+import * as ui from './ui.js';
+import { fetchAndSetCurrentTick } from './pancakeswap.js';
 
 // --- State ---
 export let provider;
@@ -27,12 +28,12 @@ export async function connectWallet() {
 
 export function disconnectWallet() {
   signer = null;
-  showDisconnectedState();
+  ui.showDisconnectedState();
 }
 
 async function updateWalletStatus() {
   if (!signer) {
-    showDisconnectedState();
+    ui.showDisconnectedState();
     return;
   }
 
@@ -44,16 +45,17 @@ async function updateWalletStatus() {
       throw new Error('Account not found or wallet is locked.');
     }
 
-    showConnectedState(account, network, BSC_CHAIN_ID);
+    ui.showConnectedState(account, network, BSC_CHAIN_ID);
+    fetchAndSetCurrentTick(); // Automatically fetch tick for the default pool
   } catch (error) {
     console.error('Failed to update wallet status, resetting UI.', error);
-    showDisconnectedState();
+    ui.showDisconnectedState();
   }
 }
 
 export async function initializeWallet() {
   if (!window.ethereum) {
-    showDisconnectedState();
+    ui.showDisconnectedState();
     return;
   }
 
@@ -72,7 +74,7 @@ export async function initializeWallet() {
   try {
     const accounts = await provider.listAccounts();
     if (accounts.length === 0) {
-      showDisconnectedState();
+      ui.showDisconnectedState();
       return;
     }
 
@@ -82,6 +84,6 @@ export async function initializeWallet() {
     await updateWalletStatus();
   } catch (error) {
     console.log('Initial connection check failed, setting UI to disconnected.', error.message);
-    showDisconnectedState();
+    ui.showDisconnectedState();
   }
 }

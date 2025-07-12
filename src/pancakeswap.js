@@ -42,13 +42,15 @@ export async function fetchAndSetCurrentTick() {
   const poolNameEl = document.getElementById('poolName');
   poolNameEl.textContent = '...'; // Show loading indicator
 
-  if (!provider || !ethers.utils.isAddress(poolAddress)) {
+  const readProvider = provider || new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+
+  if (!ethers.utils.isAddress(poolAddress)) {
     poolNameEl.textContent = '';
     return;
   }
 
   try {
-    const poolContract = new ethers.Contract(poolAddress, POOL_ABI, provider);
+    const poolContract = new ethers.Contract(poolAddress, POOL_ABI, readProvider);
 
     const [slot0, token0Address, token1Address] = await Promise.all([
       poolContract.slot0(),

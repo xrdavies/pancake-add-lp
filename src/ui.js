@@ -2,6 +2,7 @@ import { truncateAddress } from './utils.js';
 
 // --- DOM Elements ---
 let connectWalletBtn,
+  disconnectBtn,
   walletInfoEl,
   networkStatusEl,
   accountStatusEl,
@@ -18,6 +19,7 @@ let connectWalletBtn,
 
 export function setDOMElements(elements) {
   connectWalletBtn = elements.connectWalletBtn;
+  disconnectBtn = elements.disconnectBtn;
   walletInfoEl = elements.walletInfoEl;
   networkStatusEl = elements.networkStatusEl;
   accountStatusEl = elements.accountStatusEl;
