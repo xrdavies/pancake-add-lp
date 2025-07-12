@@ -17,6 +17,7 @@ export async function connectWallet() {
       await provider.send('eth_requestAccounts', []);
       signer = provider.getSigner();
       await updateWalletStatus();
+      sessionStorage.setItem('isConnected', 'true');
     } catch (err) {
       console.error('User rejected connection:', err);
       alert('Could not connect to wallet. Please approve the connection in MetaMask.');
@@ -28,6 +29,7 @@ export async function connectWallet() {
 
 export function disconnectWallet() {
   signer = null;
+  sessionStorage.removeItem('isConnected');
   ui.showDisconnectedState();
 }
 
@@ -70,6 +72,12 @@ export async function initializeWallet() {
     await updateWalletStatus();
   });
   window.ethereum.on('chainChanged', () => window.location.reload());
+
+  const isConnected = sessionStorage.getItem('isConnected');
+  if (!isConnected) {
+    ui.showDisconnectedState();
+    return;
+  }
 
   try {
     const accounts = await provider.listAccounts();
