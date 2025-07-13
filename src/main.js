@@ -1,4 +1,4 @@
-import { initializeWallet, disconnectWallet } from './wallet.js';
+import { initializeWallet, disconnectWallet, connectWallet } from './wallet.js';
 import * as ui from './ui.js';
 import * as pancakeswap from './pancakeswap.js';
 
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Event Listeners ---
-  connectWalletBtn.addEventListener('click', initializeWallet);
+  connectWalletBtn.addEventListener('click', connectWallet);
   disconnectBtn.addEventListener('click', disconnectWallet);
   poolAddressInput.addEventListener('blur', pancakeswap.fetchAndSetCurrentTick);
   fetchDataBtn.addEventListener('click', pancakeswap.fetchAndCalculate);
